@@ -14,8 +14,6 @@
 #include <math.h>
 
 
-
-
 //#define SnorCopter_MapleDroTek		// DroTek ITG3200/BMA180
 #define SnorCopter_MapleDroTek2    	// DroTek MPU6050
 //#define quadXConfig

@@ -1,10 +1,9 @@
-
 # SnoreCopter project target
 $(BUILD_PATH)/SnoreCopter.o: SnoreCopter.cpp
 	$(SILENT_CXX) $(CXX) $(CFLAGS) $(CXXFLAGS) $(LIBMAPLE_INCLUDES) $(WIRISH_INCLUDES) -o $@ -c $< 
 
-#Libraries/AQ_Math/AQMath.o: Libraries/AQ_Math/AQMath.cpp
-#	$(SILENT_CXX) $(CXX) $(CFLAGS) $(CXXFLAGS) $(LIBMAPLE_INCLUDES) $(WIRISH_INCLUDES) -o $@ -c $< 
+Libraries/AQ_Math/AQMath.o: Libraries/AQ_Math/AQMath.cpp
+	$(SILENT_CXX) $(CXX) $(CFLAGS) $(CXXFLAGS) $(LIBMAPLE_INCLUDES) $(WIRISH_INCLUDES) -o $@ -c $< 
 
 #SoftwareSerial_NB.o: SoftwareSerial_NB.cpp
 #	$(SILENT_CXX) $(CXX) $(CFLAGS) $(CXXFLAGS) $(LIBMAPLE_INCLUDES) $(WIRISH_INCLUDES) -o $@ -c $< 
@@ -12,8 +11,8 @@ $(BUILD_PATH)/SnoreCopter.o: SnoreCopter.cpp
 build/MapleCompatibility/flash_stm32.o: MapleCompatibility/flash_stm32.c
 	$(SILENT_CXX) $(CXX) $(CFLAGS) $(CXXFLAGS) $(LIBMAPLE_INCLUDES) $(WIRISH_INCLUDES) -o $@ -c $< 
 
-build/AeroQuad/AeroQuad.o: AeroQuad/AeroQuad.cpp
-	$(SILENT_CXX) $(CXX) $(CFLAGS) $(CXXFLAGS) $(LIBMAPLE_INCLUDES) $(WIRISH_INCLUDES) -o $@ -c $< 
+#build/AeroQuad/AeroQuad.o: AeroQuad/AeroQuad.cpp
+#	$(SILENT_CXX) $(CXX) $(CFLAGS) $(CXXFLAGS) $(LIBMAPLE_INCLUDES) $(WIRISH_INCLUDES) -o $@ -c $< 
 
 
 
