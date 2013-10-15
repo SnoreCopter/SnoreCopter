@@ -2,9 +2,8 @@
   
 /*
   Serial1: Multiplex Receiver
-  Serial2: Mavlink
+  Serial2: Mavlink or MPXsensor
   Serial3: GPS
-  SerialX: MPXsensor
 */  
 
 #if defined(SnorCopter_MapleCSG) || defined(SnorCopter_MapleDroTek) || defined(SnorCopter_MapleDroTek2)  
