@@ -1,4 +1,13 @@
 
+
+
+#undef SERIAL_BEGIN
+#define SERIAL_BEGIN(...) ""
+
+#define DEBUG_PRINT(str) SerialUSB.print(str); SerialUSB.print(" ");
+#define DEBUG_PRINTLN2(str, str2) SerialUSB.print(str); SerialUSB.println(str2); 
+#define DEBUG_PRINTLN(str)  SerialUSB.println(str); 
+ 
   
 /*
   Serial1: Multiplex Receiver
@@ -18,8 +27,8 @@
   // Serial
   #define SERIAL_USES_USB
   
-  #define I2C_HARDWARE_FAST
-  #define I2C_HARDWARE_PORT 1
+//  #define I2C_HARDWARE
+//  #define I2C_HARDWARE_PORT 1
   #include <Device_I2C.h>
 
   // Gyroscope declaration
@@ -103,13 +112,17 @@
     #endif
 
     initializeI2C();
+
     //Serial2.begin(38400);
-    
+
     #ifdef MavLink
       SerialMavlink.begin(57600);
     #endif
+    
+
   }
-  
+
+
   void initPlatformEEPROM(void) {
     flightMode = ATTITUDE_FLIGHT_MODE;
     headingHoldConfig = ON;  
@@ -129,7 +142,7 @@
     PID[RATE_YAXIS_PID_IDX].P = PID[RATE_XAXIS_PID_IDX].P;
     PID[RATE_YAXIS_PID_IDX].I = PID[RATE_XAXIS_PID_IDX].I;
     PID[RATE_YAXIS_PID_IDX].D = PID[RATE_XAXIS_PID_IDX].D;
-    PID[ZAXIS_PID_IDX].P = 2.0*PID[RATE_XAXIS_PID_IDX].P;
+    PID[ZAXIS_PID_IDX].P = 1.0*PID[RATE_XAXIS_PID_IDX].P;
     PID[ZAXIS_PID_IDX].I = 5.0;
     PID[ZAXIS_PID_IDX].D = -4.0*PID[ZAXIS_PID_IDX].P;
     PID[ATTITUDE_XAXIS_PID_IDX].P = PID[RATE_XAXIS_PID_IDX].P/20;
@@ -163,6 +176,11 @@
     accelScaleFactor[YAXIS] = -accelScaleFactor[XAXIS];
     accelScaleFactor[ZAXIS] = -accelScaleFactor[XAXIS];
     storeSensorsZeroToEEPROM();
+    #ifdef HeadingMagHold
+      magBias[XAXIS]  = 60.000000;
+      magBias[YAXIS]  = -39.000000;
+      magBias[ZAXIS]  = -7.500000;
+    #endif
   }
 
   /**
@@ -180,7 +198,7 @@
   
   int data = 0;
   
-  void updateSnorCopter10HZ() {
+  void updateSnoreCopter10HZ() {
     #if defined(BUZZER_PIN) && defined(BattMonitor) 
     digitalWrite(BUZZER_PIN, batteryAlarm && motorArmed);
     #endif
@@ -224,7 +242,7 @@
     PID[RATE_YAXIS_PID_IDX].I = PID[RATE_XAXIS_PID_IDX].I;
     PID[RATE_YAXIS_PID_IDX].D = PID[RATE_XAXIS_PID_IDX].D;
 #ifdef triConfig
-    PID[ZAXIS_PID_IDX].P = 2.0*PID[RATE_XAXIS_PID_IDX].P;
+    PID[ZAXIS_PID_IDX].P = 1.0*PID[RATE_XAXIS_PID_IDX].P;
 #else
     PID[ZAXIS_PID_IDX].P = 2.0*PID[RATE_XAXIS_PID_IDX].P;
 #endif

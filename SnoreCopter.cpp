@@ -1,5 +1,5 @@
 /* 
-  SnorCopter => AeroQuad for Maple
+  SnoreCopter => AeroQuad for Maple
   Mattias@Welponer.net
 */
 
@@ -19,13 +19,13 @@
 //#define quadXConfig
 #define triConfig
 //#define hexY6Config
-//#define CHANGE_YAW_DIRECTION	// only needed if you want to reverse the yaw correction direction
-#define USE_400HZ_ESC			// For ESC that support 400Hz update rate, ESC OR PLATFORM MAY NOT SUPPORT IT
+#define CHANGE_YAW_DIRECTION	// only needed if you want to reverse the yaw correction direction
+//#define USE_400HZ_ESC			// For ESC that support 400Hz update rate, ESC OR PLATFORM MAY NOT SUPPORT IT
 #define HeadingMagHold				// Enables Magnetometer, gets automatically selected if CHR6DM is defined
-#define BattMonitor
+//#define BattMonitor
 #define NormalReceiver
 #define LASTCHANNEL 8  
-
+#define CONFIG_PIDCH8
 
 
 #include <WProgram.h>
@@ -46,16 +46,16 @@ __attribute__((constructor)) void premain() {
 int main(void) {   
     delay(2000);
     #ifdef SnorCopter_MapleDroTek
-    SerialUSB.println("SnorCopter MapleDroTek: (" __DATE__ " - "__TIME__")");
+    SerialUSB.println("SnoreCopter MapleDroTek: (" __DATE__ " - "__TIME__")");
     #endif
     #ifdef SnorCopter_MapleDroTek2
-    SerialUSB.println("SnorCopter MapleDroTek2: (" __DATE__ " - "__TIME__")");
+    SerialUSB.println("SnoreCopter MapleDroTek2: (" __DATE__ " - "__TIME__")");
     #endif
-    
-    SerialUSB.println("SnorCopter: init");
+    delay(3000);
+    SerialUSB.println("SnoreCopter: init");
     setup();
-    
-    SerialUSB.println("SnorCopter: loop");
+    commandAllMotors(MINCOMMAND);
+    SerialUSB.println("SnoreCopter: loop");
     while (true) {
       loop();
     }
