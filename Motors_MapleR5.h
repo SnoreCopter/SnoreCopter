@@ -26,7 +26,7 @@
 
 #ifdef triConfig
 
-#define MOTORPIN1 2   // Timer2		// right under
+#define MOTORPIN1 2   // Timer2		// servo
 
 #define MOTORPIN2 12  // Timer3   	// left
 #define MOTORPIN3 11				// right
@@ -134,7 +134,8 @@ void commandAllMotors(int command) {
   for( int i = 0; i < 8; i++)    // Todo: LASTMOTOR not know here
     motorCommand[i] = command;
 #ifdef triConfig
-  motorCommand[0] = command + 502;
+  if (command < 1200 ) motorCommand[0] = MIDCOMMAND;
+  DEBUG_PRINTLN2("commandAllMotors: ", command)
 #endif    
   writeMotors();
 }  
