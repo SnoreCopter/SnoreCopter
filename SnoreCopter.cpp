@@ -22,7 +22,7 @@
 #define CHANGE_YAW_DIRECTION	// only needed if you want to reverse the yaw correction direction
 //#define USE_400HZ_ESC			// For ESC that support 400Hz update rate, ESC OR PLATFORM MAY NOT SUPPORT IT
 #define HeadingMagHold				// Enables Magnetometer, gets automatically selected if CHR6DM is defined
-//#define BattMonitor
+#define BattMonitor
 #define NormalReceiver
 #define LASTCHANNEL 8  
 #define CONFIG_PIDCH8

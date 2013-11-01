@@ -4,6 +4,7 @@
 #undef SERIAL_BEGIN
 #define SERIAL_BEGIN(...) ""
 
+#define DEBUG_PRINT2(str, str2) SerialUSB.print(str); SerialUSB.print(str2); 
 #define DEBUG_PRINT(str) SerialUSB.print(str); SerialUSB.print(" ");
 #define DEBUG_PRINTLN2(str, str2) SerialUSB.print(str); SerialUSB.println(str2); 
 #define DEBUG_PRINTLN(str)  SerialUSB.println(str); 
@@ -113,13 +114,11 @@
 
     initializeI2C();
 
-    //Serial2.begin(38400);
+    Serial2.begin(38400);
 
     #ifdef MavLink
       SerialMavlink.begin(57600);
     #endif
-    
-
   }
 
 
@@ -194,41 +193,53 @@
 	  measureAccelSum();
 	  previousMeasureCriticalSensorsTime = currentTime;
 	}
-  }
+  }  
   
-  int data = 0;
-  
-  void updateSnoreCopter10HZ() {
-    #if defined(BUZZER_PIN) && defined(BattMonitor) 
-    digitalWrite(BUZZER_PIN, batteryAlarm && motorArmed);
-    #endif
-
-//#define MULTIPLEX_TELEMETRY
+#define MULTIPLEX_TELEMETRY
 #ifdef MULTIPLEX_TELEMETRY
-    byte tele = 0;
-    while (Serial2.available()) {
-       tele = Serial2.read();
-       
-        if( tele == 0x02) {
-/*    delay(1);
-    data = batteryData[0].voltage;
-    byte msb = data >> 8;
-    byte lsb = data & 0xff;
-*/
-    Serial2.print(0x22);   // symbol (V, m/s, ....), addr    
-    Serial2.print(0);
-    Serial2.print(11);
-    SerialUSB.print("s ");
-}    
-       
-       if (tele == 0x1a)  SerialUSB.println("");
-       if( tele < 0x10) SerialUSB.print("0");
-       SerialUSB.print(tele, HEX);
-       SerialUSB.print(" ");
-    }
-    
-#endif
 
+#include <Telemetry_Multiplex.h>
+  
+  void writeMultiplexTelemetry(byte SensorAddress, int SensorData, byte SensorType, byte SensorAlert) {
+    byte address = (SensorAddress << 4) + SensorType;
+    int data = (SensorData << 1) + SensorAlert;
+    byte data_msb = data >> 8;
+    byte data_lsb = data & 0xff;
+    Serial2.write(address);       
+    Serial2.write(data_lsb);
+    Serial2.write(data_msb);  
+  }
+    
+  void updateMultiplexTelemtry() {
+    while (Serial2.available()) {
+      byte tele = Serial2.read();
+          delay_us(300);
+
+      #ifdef BattMonitor
+      if( tele == MULTIPLEX_ADDR03) {
+         writeMultiplexTelemetry(MULTIPLEX_ADDR03, batteryData[0].voltage, MULTIPLEX_VOLTAGE, MULTIPLEX_NOALERT);
+      }    
+      else if( tele == MULTIPLEX_ADDR04) {
+        writeMultiplexTelemetry(MULTIPLEX_ADDR04, batteryData[0].current/100.0, MULTIPLEX_CURRENT, MULTIPLEX_NOALERT);
+      } 
+      else if( tele == MULTIPLEX_ADDR05) {
+        writeMultiplexTelemetry(MULTIPLEX_ADDR05, batteryData[0].usedCapacity/1000.0, MULTIPLEX_CAP, MULTIPLEX_NOALERT);
+      } 
+      #endif
+    }
+  }  
+          
+#endif
+    
+    
+  void updateSnoreCopter100Hz() {
+    #if defined(BUZZER_PIN) && defined(BattMonitor) 
+      digitalWrite(BUZZER_PIN, batteryAlarm && motorArmed);
+    #endif
+    #ifdef MULTIPLEX_TELEMETRY
+      updateMultiplexTelemtry();
+    #endif
+  
 #ifdef CONFIG_PIDCH8
     float factor = receiverCommand[7];
     factor -= 1256.0;

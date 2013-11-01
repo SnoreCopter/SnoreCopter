@@ -135,7 +135,6 @@ void commandAllMotors(int command) {
     motorCommand[i] = command;
 #ifdef triConfig
   if (command < 1200 ) motorCommand[0] = MIDCOMMAND;
-  DEBUG_PRINTLN2("commandAllMotors: ", command)
 #endif    
   writeMotors();
 }  
