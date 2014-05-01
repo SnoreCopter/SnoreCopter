@@ -14,13 +14,13 @@
 #include <math.h>
 
 
-//#define SnorCopter_MapleDroTek		// DroTek ITG3200/BMA180
-#define SnorCopter_MapleDroTek2    	// DroTek MPU6050
+#define SnorCopter_MapleDroTek		// DroTek ITG3200/BMA180
+//#define SnorCopter_MapleDroTek2    	// DroTek MPU6050
 //#define quadXConfig
-#define triConfig
-//#define hexY6Config
-#define CHANGE_YAW_DIRECTION	// only needed if you want to reverse the yaw correction direction
-//#define USE_400HZ_ESC			// For ESC that support 400Hz update rate, ESC OR PLATFORM MAY NOT SUPPORT IT
+//#define triConfig
+#define hexY6Config
+//#define CHANGE_YAW_DIRECTION	// only needed if you want to reverse the yaw correction direction
+#define USE_400HZ_ESC			// For ESC that support 400Hz update rate, ESC OR PLATFORM MAY NOT SUPPORT IT
 #define HeadingMagHold				// Enables Magnetometer, gets automatically selected if CHR6DM is defined
 #define BattMonitor
 #define NormalReceiver

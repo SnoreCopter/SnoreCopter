@@ -3,25 +3,26 @@
 
 
 
-#define MULTIPLEX_SPECIAL	0
-#define MULTIPLEX_VOLTAGE	1    	// 0,1 V
-#define MULTIPLEX_CURRENT	2		// 0,1 A	
-#define MULTIPLEX_VARIO		3		// 0,1 m/s
-#define MULTIPLEX_SPEED		4		// 0,1 km/h
-#define MULTIPLEX_RPM		5		// 100 rpm bzw. 10 rpm
-#define MULTIPLEX_TEMP		6		// 0,1 °C
-#define MULTIPLEX_DIR		7		// 0,1 Grad
-#define MULTIPLEX_ALT		8		// 1m
-#define MULTIPLEX_TANK		9		// 1% Tank
-#define MULTIPLEX_LQI		10		// 1% LQI
-#define MULTIPLEX_CAP		11		// 1 mAh
-#define MULTIPLEX_FLUID		12		// 1 mL
-#define MULTIPLEX_LDIST		13		// 0,1 km
+#define MULTIPLEX_NONE		0x00
+#define MULTIPLEX_VOLTAGE	0x01    // 0,1 V
+#define MULTIPLEX_CURRENT	0x02	// 0,1 A	
+#define MULTIPLEX_VARIO		0x03	// 0,1 m/s
+#define MULTIPLEX_SPEED		0x04	// 0,1 km/h
+#define MULTIPLEX_RPM		0x05	// 100 rpm bzw. 10 rpm
+#define MULTIPLEX_TEMP		0x06	// 0,1 °C
+#define MULTIPLEX_DIR		0x07	// 0,1 Grad
+#define MULTIPLEX_ALT		0x08	// 1m
+#define MULTIPLEX_TANK		0x09	// 1% Tank
+#define MULTIPLEX_LQI		0x0a	// 1% LQI
+#define MULTIPLEX_CAP		0x0b	// 1 mAh
+#define MULTIPLEX_FLUID		0x0c	// 1 mL
+#define MULTIPLEX_LDIST		0x0d	// 0,1 km
  
 #define MULTIPLEX_NOALERT		0
 #define MULTIPLEX_ALERT			1
 
 #define MULTIPLEX_RESET		0x5a
+#define MULTIPLEX_UNKNOWN	0x80
   
 #define MULTIPLEX_ADDR00  	0x00
 #define MULTIPLEX_ADDR01  	0x01
@@ -39,7 +40,6 @@
 #define MULTIPLEX_ADDR0d  	0x0d
 #define MULTIPLEX_ADDR0e  	0x0e
 #define MULTIPLEX_ADDR0f  	0x0f
-
 
 
 #endif // _AEROQUAD_TELEMETRY_MULTIPLEX_H_
