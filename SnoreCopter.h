@@ -62,6 +62,8 @@
   // Motor Declaration
   #include <Motors_MapleR5.h>
 
+  #include <FlightConfigMEGA.h>
+
   // Heading mag hold declaration
   #ifdef HeadingMagHold
     #define HMC5883L
@@ -91,7 +93,98 @@
     #define MAX7456_OSD
   #endif
 
-  int TeleData_Count;
+  #define MULTIPLEX_TELEMETRY
+  #ifdef MULTIPLEX_TELEMETRY
+    #include <Telemetry_Multiplex.h>
+  #endif
+
+class Device {
+public:
+
+};
+
+class DeviceI2C: public Device {
+  boolean _status;
+public:
+  DeviceI2C() { _status = false; }
+  void initialize(void) { Wire.begin(); _status = true; }
+  byte requestI2C(int deviceAddress, int numBytes) { return Wire.requestFrom(deviceAddress, numBytes); }
+ 
+};
+
+class DeviceSPI: public Device {
+public:
+  DeviceSPI() {}
+};
+
+class Sensor {
+protected:
+  boolean _status; 
+public:
+  Device _device;
+  Sensor() { _status = false; }
+  Sensor(Device &d) { _device = d; _status = false; }
+  
+  boolean status(void) { 
+    SerialUSB.print("Sensor "); 
+    if (_status) SerialUSB.println("OK"); else SerialUSB.println("NOK"); 
+    return _status; 
+  }
+  void intitialize(void) { SerialUSB.println("Error "); _status = false; }
+  void deactivate(void) {}
+  void measure(void) {}
+  int read(byte channel) { return 0; }
+};
+
+class SensorITG3200: public Sensor {
+public:  
+  SensorITG3200(Device &d): Sensor(d) {}
+  
+  #include <Gyroscope_ITG3200.h>	
+   
+  void intitialize(void) { SerialUSB.println("ITG3200: init "); _status = true; }
+  boolean status(void) { SerialUSB.print("ITG3200: "); 
+    if (_status) SerialUSB.println("OK"); else SerialUSB.println("NOK"); 
+    return _status; }
+};
+
+class SensorBMA180: public Sensor {
+public:  
+  SensorBMA180(Device &d): Sensor(d) {}
+  
+  #include <Accelerometer_BMA180.h>	 
+  void intitialize(void) { SerialUSB.println("BMA180: init "); _status = true; }
+  boolean status(void) { SerialUSB.print("BMA180"); 
+    if (_status) SerialUSB.println("OK"); else SerialUSB.println("NOK"); 
+    return _status; }
+};
+
+class SensorMPU6000: public Sensor {
+public:
+  SensorMPU6000(Device &d): Sensor(d) {}
+  SensorMPU6000(byte addr): Sensor() {}
+  
+  #define MPU6000_I2C
+  #define MPU6000_I2C_ADDRESS 0x69
+  #include <Gyroscope_MPU6000.h>
+  #include <Accelerometer_MPU6000.h>	 
+  
+  void intitialize(void) { SerialUSB.println("MPU6000: init "); _status = true; }
+  boolean status(void) { SerialUSB.println("MPU6000"); 
+    if (_status) SerialUSB.println("OK"); else SerialUSB.println("NOK"); 
+    return _status;}
+};
+
+
+class SensorHMC5883L: public Sensor {
+public:
+  SensorHMC5883L(Device &d): Sensor(d) {}
+  #define HMC5883L
+  #include <Magnetometer_HMC5883L.h>
+  void intitialize(void) { SerialUSB.println("HMC5883L: init "); _status = true; }
+  boolean status(void) { SerialUSB.println("HMC5883L"); if (_status) SerialUSB.println("OK"); else SerialUSB.println("NOK"); 
+    return _status;}
+};
 
 
   /**
@@ -108,12 +201,53 @@
 
     initializeI2C();
 
-    Serial2.begin(38400);
-	TeleData_Count = 0;
+    DeviceI2C DevI2C;
+
+    Sensor SensNone;
+    SensorMPU6000 SensMPU6000(DevI2C);
+    SensorITG3200 SensITG3200(DevI2C);
+    SensorBMA180 SensBMA180(DevI2C);
+    SensorHMC5883L SensHMC5883L(DevI2C);
     
+    boolean mpu6000 = true;
+    boolean hmc5883l = false;
+    
+    Sensor SensorGyro;
+    Sensor SensorAccel;
+    Sensor SensorMag;
+    
+    SensorGyro = SensMPU6000;
+    SensorAccel = SensMPU6000;
+    SensorMag = SensHMC5883L;
+    
+    
+    SensorGyro.status();
+    SensorAccel.status();
+    SensorMag.status();
+
+    
+
+    inititializeTelemetry();
+	
     #ifdef MavLink
       SerialMavlink.begin(57600);
     #endif
+	
+      switch (flightConfigType) 
+      {
+        case OCTO_X :
+        case OCTO_PLUS :
+        case OCTO_X8 :
+          LASTMOTOR = 8;
+          break;
+        case HEX_Y6 :
+        case HEX_PLUS :
+        case HEX_X :
+          LASTMOTOR = 6;
+          break;
+        default:
+          LASTMOTOR = 4;
+      }
   }
 
   /**
@@ -121,16 +255,25 @@
    */
   void initPlatformEEPROM(void) {
     flightMode = ATTITUDE_FLIGHT_MODE;
-    headingHoldConfig = ON;  
+    //headingHoldConfig = ON;  
+	headingHoldState    = ON;
     minArmedThrottle = 1100;
-
-    
+#ifdef SnorCopter_MapleDroTek		// DroTek ITG3200/BMA180
+    flightConfigType = HEX_Y6;	 
+#else //SnorCopter_MapleDroTek2    	// DroTek MPU6050
+    flightConfigType = QUAD_X;	 
+#endif
+	LASTMOTOR = 6; 
+	receiverTypeUsed = 1;
+	LAST_CHANNEL = 8;
+    yawDirection = 1;
+	
     for (byte channel = XAXIS; channel < LASTCHANNEL; channel++) {
-      receiverSlope[channel] = 0.3106;
-      receiverOffset[channel] = 863.77;
-      receiverSmoothFactor[channel] = 1.0;
+      receiverMinValue[channel] = 439;
+	  receiverMaxValue[channel] = 3655;	 
+      //receiverSmoothFactor[channel] = 1.0;
     }
-
+	
 
     PID[RATE_XAXIS_PID_IDX].P = 60.0;
     PID[RATE_XAXIS_PID_IDX].I = 0.0;
@@ -150,12 +293,12 @@
     PID[HEADING_HOLD_PID_IDX].P = PID[ATTITUDE_XAXIS_PID_IDX].P;
     PID[HEADING_HOLD_PID_IDX].I = 0.1;
     PID[HEADING_HOLD_PID_IDX].D = 0.0;  
-    PID[ATTITUDE_GYRO_XAXIS_PID_IDX].P = PID[RATE_XAXIS_PID_IDX].P - (0.1*PID[RATE_XAXIS_PID_IDX].P);
+	/*    PID[ATTITUDE_GYRO_XAXIS_PID_IDX].P = PID[RATE_XAXIS_PID_IDX].P - (0.1*PID[RATE_XAXIS_PID_IDX].P);
     PID[ATTITUDE_GYRO_XAXIS_PID_IDX].I = PID[RATE_XAXIS_PID_IDX].I ;
     PID[ATTITUDE_GYRO_XAXIS_PID_IDX].D = PID[RATE_XAXIS_PID_IDX].D;
     PID[ATTITUDE_GYRO_YAXIS_PID_IDX].P = PID[RATE_YAXIS_PID_IDX].P - (0.1*PID[RATE_YAXIS_PID_IDX].P);
     PID[ATTITUDE_GYRO_YAXIS_PID_IDX].I = PID[RATE_YAXIS_PID_IDX].I;
-    PID[ATTITUDE_GYRO_YAXIS_PID_IDX].D = PID[RATE_YAXIS_PID_IDX].D;   
+    PID[ATTITUDE_GYRO_YAXIS_PID_IDX].D = PID[RATE_YAXIS_PID_IDX].D;   */
   }
 
   // Called when eeprom is initialized
@@ -182,115 +325,29 @@
   /**
    * Measure critical sensors
    */
-  unsigned long previousMeasureCriticalSensorsTime = 0;
+  //unsigned long previousMeasureCriticalSensorsTime = 0;
   void measureCriticalSensors() {
-    // read sensors not faster than every 1 ms
-    if (currentTime - previousMeasureCriticalSensorsTime >= 1000) {
+    #ifdef SnorCopter_MapleDroTek2
+	  readMPU6000Sensors();
+    #endif
+	// read sensors not faster than every 1 ms
+    //if (currentTime - previousMeasureCriticalSensorsTime >= 1000) {
 	  measureGyroSum();
 	  measureAccelSum();
-	  previousMeasureCriticalSensorsTime = currentTime;
-	}
+	//  previousMeasureCriticalSensorsTime = currentTime;
+	//}
   }  
   
 #define MAPLE_ADC_TEST
 #ifdef MAPLE_ADC_TEST
 
-  
-
 #endif
 
 
 
-#define MULTIPLEX_TELEMETRY
-#ifdef MULTIPLEX_TELEMETRY
-
-#include <Telemetry_Multiplex.h>
-
-char tele_last;
-byte sensor_count = 0;
-byte sensor_type = 0;
-  
-  void writeMultiplexTelemetry(byte SensorAddress, int SensorData, byte SensorType, byte SensorAlert = 0) {
-    Serial2.write((SensorAddress << 4) + SensorType);       
-    Serial2.write((SensorData << 1) + SensorAlert);
-    Serial2.write(SensorData >> 8);  
-  }
-    
-  void updateMultiplexTelemtry() {
-    while (Serial2.available()) {
-      byte tele = Serial2.read();
-
-    if (tele == sensor_count) {
-      if (sensor_count == 0x00) SerialUSB.println(" s ");
-      SerialUSB.print(tele, HEX);
-      SerialUSB.print(" ");
-      sensor_count++;
-      if (sensor_count >= 0x0F) sensor_count = 0;
-    } else {
-      if (tele>>4 == tele_last) {
-        SerialUSB.print("sens: ");
-        SerialUSB.print(tele, HEX);
-      } else {
-        sensor_count = tele + 1;
-        SerialUSB.print(" sync ");
-      }
-    }
-    tele_last = tele;
-
-      
- /*     
-      
-      if (tele_last++ == tele) {   // normal count
-        SerialUSB.print(tele, HEX);
-        SerialUSB.print(" ");
-      
-      }
-      
-      
-      if (sensor_count == 3) {
-        SerialUSB.print(tele, HEX);
-        SerialUSB.print(" ");
-      }
-      else if (sensor_count == 2) {
-        SerialUSB.print(tele, HEX);
-        SerialUSB.print(" ");
-        sensor_count = 3;
-      } 
-      else if ((sensor_count == 0) && (tele>>4 == tele_last)) {
-        SerialUSB.print(tele, HEX);
-        SerialUSB.print(" ");
-        sensor_count = 2;
-      }
-      */
-/*      
-      if( tele == MULTIPLEX_ADDR02) {
-        // writeMultiplexTelemetry(MULTIPLEX_ADDR02, 1, MULTIPLEX_VOLTAGE, MULTIPLEX_NOALERT);
-      }   
-*/
-      #ifdef BattMonitor
-  /*    if( tele == MULTIPLEX_ADDR03) {
-         writeMultiplexTelemetry(MULTIPLEX_ADDR03, 123, MULTIPLEX_VOLTAGE, MULTIPLEX_NOALERT);
-      //writeMultiplexTelemetry(MULTIPLEX_ADDR03, batteryData[0].voltage, MULTIPLEX_VOLTAGE, MULTIPLEX_NOALERT);
-      }    
-      if( tele == MULTIPLEX_ADDR04) {
-        writeMultiplexTelemetry(MULTIPLEX_ADDR04, 123, MULTIPLEX_CURRENT, MULTIPLEX_NOALERT);
-        //writeMultiplexTelemetry(MULTIPLEX_ADDR04, batteryData[0].current/100.0, MULTIPLEX_CURRENT, MULTIPLEX_NOALERT);
-      } 
-      if( tele == MULTIPLEX_ADDR05) {
-        writeMultiplexTelemetry(MULTIPLEX_ADDR05, 123, MULTIPLEX_CAP, MULTIPLEX_NOALERT);
-      //  writeMultiplexTelemetry(MULTIPLEX_ADDR05, batteryData[0].usedCapacity/1000.0, MULTIPLEX_CAP, MULTIPLEX_NOALERT);
-      }  */
-      
-      #endif
-      
-      tele_last = tele; 
-    }
-  }  
-          
-#endif
     
     
-  void updateSnoreCopter100Hz() {
+  void processSnoreCopter50Hz() {
   
 /*  
   SerialUSB.println(">");
@@ -305,7 +362,7 @@ byte sensor_type = 0;
       digitalWrite(BUZZER_PIN, batteryAlarm && motorArmed);
     #endif
     #ifdef MULTIPLEX_TELEMETRY
-      updateMultiplexTelemtry();
+      updateTelemtry();
     #endif
   
 #ifdef CONFIG_PIDCH8
@@ -336,12 +393,12 @@ byte sensor_type = 0;
     PID[HEADING_HOLD_PID_IDX].P = 3.0;
     PID[HEADING_HOLD_PID_IDX].I = 0.1;
     PID[HEADING_HOLD_PID_IDX].D = 0.0;  
-    PID[ATTITUDE_GYRO_XAXIS_PID_IDX].P = PID[RATE_XAXIS_PID_IDX].P - (0.2*PID[RATE_XAXIS_PID_IDX].P);
+/*    PID[ATTITUDE_GYRO_XAXIS_PID_IDX].P = PID[RATE_XAXIS_PID_IDX].P - (0.2*PID[RATE_XAXIS_PID_IDX].P);
     PID[ATTITUDE_GYRO_XAXIS_PID_IDX].I = PID[RATE_XAXIS_PID_IDX].I ;
     PID[ATTITUDE_GYRO_XAXIS_PID_IDX].D = PID[RATE_XAXIS_PID_IDX].D;
     PID[ATTITUDE_GYRO_YAXIS_PID_IDX].P = PID[RATE_YAXIS_PID_IDX].P - (0.2*PID[RATE_YAXIS_PID_IDX].P);
     PID[ATTITUDE_GYRO_YAXIS_PID_IDX].I = PID[RATE_YAXIS_PID_IDX].I;
-    PID[ATTITUDE_GYRO_YAXIS_PID_IDX].D = PID[RATE_YAXIS_PID_IDX].D; 
+    PID[ATTITUDE_GYRO_YAXIS_PID_IDX].D = PID[RATE_YAXIS_PID_IDX].D; */
 #endif
   }
 

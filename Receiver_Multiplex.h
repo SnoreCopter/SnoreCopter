@@ -24,7 +24,8 @@
 #ifndef _AEROQUAD_RECEIVER_MULTIPLEX_H_
 #define _AEROQUAD_RECEIVER_MULTIPLEX_H_
 
-#include "Receiver.h"
+//#include <Receiver.h>
+#include <Receiver_base_MEGA.h>
 
 #ifndef RECEIVER_MULTIPLEX_SERIAL
   #define RECEIVER_MULTIPLEX_SERIAL Serial1
@@ -32,6 +33,10 @@
 
 // Serial Multiplex protocol 
 // StartByte (0xA1), 24 Servo high&low byte, 2 byte CRC16
+
+#define MULTIPLEX_RX_STARTBYTE 0xa1
+#define MULTIPLEX_RX_LENGHT 24
+#define MULTIPLEX_RX_BAUD 115200
 
 char ServoData[24];  
 unsigned short CheckSum;
@@ -45,31 +50,35 @@ void initializeCRC16_CCITT( void);
 unsigned short calcCRC16_CCITT( unsigned short crc, char c);
 #define CRC16_CCITT_POLY 0x1021
 
-
-void initializeReceiver(int nbChannel) {
-  initializeReceiverParam(nbChannel);
+//void initializeReceiver( int nbChannel) {
+void initializeReceiverMPX() {
+//  initializeReceiverParam(nbChannel);
   initializeCRC16_CCITT();
-  RECEIVER_MULTIPLEX_SERIAL.begin(115200);
+  RECEIVER_MULTIPLEX_SERIAL.begin(MULTIPLEX_RX_BAUD);
   CheckSum_OK = false;
 }
+
+/* void ReceiverMPX(void) {
+
+}  */
   
-void readMultiplexSerialReceiver(void) {    
+void readMultiplexSerialReceiver( void) {    
   while (RECEIVER_MULTIPLEX_SERIAL.available()) {
     char inByte = RECEIVER_MULTIPLEX_SERIAL.read();
 
-    if ((inByte == 0xA1) && (ServoData_Count >= 24+2)) {
+    if ((inByte == MULTIPLEX_RX_STARTBYTE) && (ServoData_Count >= MULTIPLEX_RX_LENGHT + 2)) {
       ServoData_Count = 0;
-      CheckSum_CRC16 = calcCRC16_CCITT(0x0000, 0xA1);   // start byte also part of the CRC 
-    } else if (ServoData_Count <= 23) {
+      CheckSum_CRC16 = calcCRC16_CCITT(0x0000, MULTIPLEX_RX_STARTBYTE);   // start byte also part of the CRC 
+    } else if (ServoData_Count <= MULTIPLEX_RX_LENGHT - 1) {
         ServoData[ServoData_Count] = inByte;
         CheckSum_CRC16 = calcCRC16_CCITT(CheckSum_CRC16, inByte);
         ServoData_Count++;
         //SerialUSB.print(inByte, DEC); SerialUSB.print(", ");
-    } else if (ServoData_Count == 24) {
+    } else if (ServoData_Count == MULTIPLEX_RX_LENGHT) {
         CheckSum = inByte; 
         ServoData_Count++;
         //SerialUSB.println("");
-    } else if (ServoData_Count == 25) {
+    } else if (ServoData_Count == MULTIPLEX_RX_LENGHT + 1) {
         CheckSum = ((CheckSum << 8) + inByte);  
         CheckSum_OK = (CheckSum == CheckSum_CRC16);
         ServoData_Count++;
@@ -81,7 +90,8 @@ void setChannelValue(byte channel,int value) {
     receiverCommand[channel] = value;
 }
 
-int getRawChannelValue(byte channel) {
+//int getRawChannelValue(byte channel) {
+int getRawChannelValueMPX(const byte channel) {
   if (channel == XAXIS) {
     readMultiplexSerialReceiver();
   }
@@ -115,6 +125,36 @@ void initializeCRC16_CCITT( void) {
     TableCRC16[i] = crc;
   }
 } 
+
+
+void initializeReceiverPWM() {
+
+}
+
+
+int getRawChannelValuePWM(const byte channel) {
+	return 0;
+}
+
+void initializeReceiverPPM() {
+
+}
+
+
+int getRawChannelValuePPM(const byte channel) {
+	return 0;
+}
+
+void initializeReceiverSBUS() {
+
+}
+
+
+int getRawChannelValueSBUS(const byte channel) {
+	return 0;
+}
+
+
 
 #endif
 

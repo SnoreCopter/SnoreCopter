@@ -63,11 +63,9 @@
 #define SERVO_PRESCALER (CPU_FREQ/1000000 - 1)
 
 
+
+//void initializeMotors(NB_Motors numbers) {
 void initializeMotors(byte numbers) {
-
-}
-
-void initializeMotors(NB_Motors numbers) {
   numberOfMotors = numbers;
 #ifdef triConfig
 
@@ -92,7 +90,8 @@ void initializeMotors(NB_Motors numbers) {
   pinMode(MOTORPIN3, PWM);
   pinMode(MOTORPIN4, PWM);
 
-  if (numberOfMotors == SIX_Motors) {
+//  if (numberOfMotors == SIX_Motors) {
+  if (numberOfMotors == 6) {
     Timer2.setPrescaleFactor(MOTOR_PRESCALER);
     Timer2.setOverflow(MOTOR_PERIOD);
     
@@ -116,8 +115,9 @@ void writeMotors() {
   Timer3.setCompare(TIMER_CH2, motorCommand[MOTOR2]);
   Timer3.setCompare(TIMER_CH3, motorCommand[MOTOR3]);
   Timer3.setCompare(TIMER_CH4, motorCommand[MOTOR4]);
-  
-  if (numberOfMotors == SIX_Motors) {  
+
+//  if (numberOfMotors == SIX_Motors) {    
+  if (numberOfMotors == 6) {  
     Timer2.setCompare(TIMER_CH1, motorCommand[MOTOR5]);
     Timer2.setCompare(TIMER_CH2, motorCommand[MOTOR6]);
   }   

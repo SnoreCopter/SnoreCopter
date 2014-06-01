@@ -25,7 +25,7 @@
 #define BattMonitor
 #define NormalReceiver
 #define LASTCHANNEL 8  
-#define CONFIG_PIDCH8
+//#define CONFIG_PIDCH8
 
 
 #include <WProgram.h>
@@ -51,7 +51,8 @@ int main(void) {
     #ifdef SnorCopter_MapleDroTek2
     SerialUSB.println("SnoreCopter MapleDroTek2: (" __DATE__ " - "__TIME__")");
     #endif
-    delay(3000);
+    delay(2000);
+	SerialUSB.println("");
     SerialUSB.println("SnoreCopter: init");
     setup();
     commandAllMotors(MINCOMMAND);
